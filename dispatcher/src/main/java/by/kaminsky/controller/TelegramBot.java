@@ -1,6 +1,7 @@
 package by.kaminsky.controller;
 
 import by.kaminsky.config.BotConfig;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,29 +16,23 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final BotConfig botConfig;
+    private UpdateController updateController;
+
+    @PostConstruct
+    public void linkController() {
+        updateController.registerBot(this);
+    }
 
     @Override
     public String getBotUsername() {
         return botConfig.getBotName();
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public String getBotToken() {
-        return botConfig.getToken();
-    }
-
     @Override
     public void onUpdateReceived(Update update) {
         var massage = update.getMessage();
-        var text = massage.getText();
-        var user  = massage.getFrom().getFirstName();
-        log.info(user + " : " + text);
-
-        var response = new SendMessage();
-        response.setChatId(massage.getChatId().toString());
-        response.setText("Hello from bot!");
-        sendAnswerMessage(response);
+        log.info(massage.getFrom().getFirstName() + " : " + massage.getText());
+        updateController.processUpdate(update);
     }
 
     public void sendAnswerMessage(SendMessage message) {

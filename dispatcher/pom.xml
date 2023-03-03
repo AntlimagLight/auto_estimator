@@ -12,7 +12,6 @@
     <artifactId>dispatcher</artifactId>
     <name>dispatcher</name>
 
-
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -28,8 +27,12 @@
             <artifactId>telegrambots-spring-boot-starter</artifactId>
             <version>6.5.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>by.kaminsky</groupId>
+            <artifactId>common-kafka</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
-
-
 
 </project>
