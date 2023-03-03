@@ -23,6 +23,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         updateController.registerBot(this);
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public String getBotToken() {
+        return botConfig.getToken();
+    }
+
     @Override
     public String getBotUsername() {
         return botConfig.getBotName();

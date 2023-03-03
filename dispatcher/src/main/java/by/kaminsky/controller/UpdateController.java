@@ -31,7 +31,7 @@ public class UpdateController {
         val message = update.getMessage();
         if (message == null || message.getText() == null) {
             log.warn("Тип сообщения не поддерживается: " + update);
-            sendResponse(update, "Данный вид сообщения не поддерживается.");
+            sendResponse(update, "❗️Данный вид сообщения не поддерживается.");
         } else {
             processTextMessage(update);
         }
