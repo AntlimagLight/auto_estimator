@@ -5,7 +5,7 @@
     <jmxConfigurator/>
 
     <appender name="file" class="ch.qos.logback.core.FileAppender">
-        <file>log/dispatcher.log</file>
+        <file>log/node.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.RollingFileAppender">
             <fileNamePattern>slf4jlogbackexample.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>90</maxHistory>

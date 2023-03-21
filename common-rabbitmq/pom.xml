@@ -8,7 +8,7 @@
         <artifactId>auto_estimator</artifactId>
         <version>1.0</version>
     </parent>
-    <artifactId>common-kafka</artifactId>
+    <artifactId>common-rabbitmq</artifactId>
     <name>kafka</name>
 
     <properties>

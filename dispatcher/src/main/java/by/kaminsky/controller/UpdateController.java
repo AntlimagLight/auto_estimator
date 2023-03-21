@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static by.kaminsky.model.KafkaQueue.TEXT_MESSAGE_UPDATE;
+import static by.kaminsky.model.RabbitQueue.TEXT_MESSAGE_UPDATE;
 
 @Component
 @Slf4j
@@ -30,22 +30,26 @@ public class UpdateController {
         }
         val message = update.getMessage();
         if (message == null || message.getText() == null) {
-            log.warn("Тип сообщения не поддерживается: " + update);
-            sendResponse(update, "❗️Данный вид сообщения не поддерживается.");
+            log.warn("Message type not supported: " + update);
+            serviceResponse(update, "❗️Данный вид сообщения не поддерживается.");
         } else {
             processTextMessage(update);
         }
     }
 
-    private void processTextMessage(Update update) {
-        updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
-        sendResponse(update, "Идет обработка...");
+    public void view(SendMessage sendMessage) {
+        telegramBot.sendAnswerMessage(sendMessage);
     }
 
-    public void sendResponse(Update update, String text) {
+    private void processTextMessage(Update update) {
+        updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
+        serviceResponse(update, "Идет обработка...");
+    }
+
+    public void serviceResponse(Update update, String text) {
         var response = new SendMessage();
         response.setChatId(update.getMessage().getChatId().toString());
         response.setText(text);
-        telegramBot.sendAnswerMessage(response);
+        view(response);
     }
 }

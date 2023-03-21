@@ -7,7 +7,8 @@
     <version>1.0</version>
     <modules>
         <module>dispatcher</module>
-        <module>common-kafka</module>
+        <module>common-rabbitmq</module>
+        <module>node</module>
     </modules>
     <packaging>pom</packaging>
     <parent>
@@ -20,6 +21,7 @@
         <start-class>by.kaminsky.App</start-class>
         <java.version>17</java.version>
         <lombok.version>1.18.26</lombok.version>
+        <telegtambot.starter.version>6.5.0</telegtambot.starter.version>
     </properties>
     <dependencies>
         <dependency>
