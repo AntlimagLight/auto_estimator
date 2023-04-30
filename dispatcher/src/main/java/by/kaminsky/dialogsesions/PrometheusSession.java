@@ -30,7 +30,8 @@ public class PrometheusSession implements DialogSession {
             case (4) -> stage4(userAnswer);
             case (5) -> stage5(userAnswer);
             case (6) -> stage6(userAnswer);
-            default -> "Ошибка сессии Прометея";
+            default -> throw new RuntimeException("Error when determining the stage of the Prometheus session: "
+                    + stage);
         };
     }
 
@@ -57,9 +58,13 @@ public class PrometheusSession implements DialogSession {
 
     private String stage2(String userAnswer) {
         val height = Integer.parseInt(userAnswer);
-        requestData.setHeight(height);
-        stage++;
-        return "Нужна ли покрывная плита? да/нет";
+        if (!(height < 3000 || height > 20000)) {
+            requestData.setHeight(height);
+            stage++;
+            return "Нужна ли покрывная плита? да/нет";
+        } else {
+            return "Высота должна быть указанна в мм. Возможный диапазон от 3000 до 20000. Попробуйте снова";
+        }
     }
 
     private String stage3(String userAnswer) {

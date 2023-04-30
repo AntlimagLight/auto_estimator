@@ -31,6 +31,8 @@ public class UpdateController {
     }
 
     public void processUpdate(Update update) {
+
+        // Base validation
         if (update == null) {
             log.warn("Received update is null");
             return;
@@ -41,20 +43,29 @@ public class UpdateController {
             serviceResponse(update.getMessage().getChatId(), "❗️Данный вид сообщения не поддерживается.");
             return;
         }
-        // Prometheus case
+        val text = message.getText();
         val chatId = message.getChatId();
+
+        // StopSessions case
+        if (text.toLowerCase().contains("stop") || text.toLowerCase().contains("стоп")){
+            prometheusChats.remove(chatId);
+            log.info("User sessions cleared {}", chatId);
+            return;
+        }
+
+        // Prometheus case
         if (prometheusChats.containsKey(chatId)) {
-            val sessionResponse = prometheusChats.get(chatId).sessionProcess(message.getText());
+            val sessionResponse = prometheusChats.get(chatId).sessionProcess(text);
             if (sessionResponse == null) {
-                log.info("Отправляем данные по прометею: {}", prometheusChats.get(chatId).getRequestData().toString());
+                log.info("Sending data via Prometheus: {}", prometheusChats.get(chatId).getRequestData().toString());
                 updateProducer.produceSessionRequest(PROMETHEUS_REQUEST_UPDATE, prometheusChats.get(chatId));
-                serviceResponse(update.getMessage().getChatId(), "Обрабатывается запрос на расчет стоимости...");
+                serviceResponse(chatId, "Обрабатывается запрос на расчет стоимости...");
                 prometheusChats.remove(chatId);
             } else {
                 serviceResponse(chatId, sessionResponse);
             }
             return;
-        } else if (message.getText().toLowerCase().contains("прометей")) {
+        } else if (text.toLowerCase().contains("прометей")) {
             var newSession = new PrometheusSession(update);
             serviceResponse(chatId, newSession.sessionProcess(""));
             prometheusChats.put(chatId, newSession);
@@ -80,4 +91,6 @@ public class UpdateController {
         response.setText(text);
         view(response);
     }
+
+    //TODO реализовать метод для чистки сессий по таймауту
 }
