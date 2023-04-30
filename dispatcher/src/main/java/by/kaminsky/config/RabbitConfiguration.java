@@ -6,8 +6,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static by.kaminsky.model.RabbitQueue.ANSWER_MESSAGE;
-import static by.kaminsky.model.RabbitQueue.TEXT_MESSAGE_UPDATE;
+import static by.kaminsky.constants.RabbitQueue.*;
 
 @Configuration
 public class RabbitConfiguration {
@@ -19,6 +18,11 @@ public class RabbitConfiguration {
     @Bean
     public Queue textMessageQueue() {
         return new Queue(TEXT_MESSAGE_UPDATE);
+    }
+
+    @Bean
+    public Queue prometheusRequestQueue() {
+        return new Queue(PROMETHEUS_REQUEST_UPDATE);
     }
 
     @Bean

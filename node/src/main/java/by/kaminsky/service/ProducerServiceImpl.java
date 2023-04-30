@@ -6,7 +6,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
-import static by.kaminsky.model.RabbitQueue.ANSWER_MESSAGE;
+import static by.kaminsky.constants.RabbitQueue.ANSWER_MESSAGE;
 
 @Service
 @Slf4j

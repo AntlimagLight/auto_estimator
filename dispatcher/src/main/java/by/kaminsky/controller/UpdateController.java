@@ -11,7 +11,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import java.util.HashMap;
 import java.util.Map;
 
-import static by.kaminsky.model.RabbitQueue.TEXT_MESSAGE_UPDATE;
+import static by.kaminsky.constants.RabbitQueue.PROMETHEUS_REQUEST_UPDATE;
+import static by.kaminsky.constants.RabbitQueue.TEXT_MESSAGE_UPDATE;
 
 @Component
 @Slf4j
@@ -38,24 +39,30 @@ public class UpdateController {
         if (message == null || message.getText() == null) {
             log.warn("Message type not supported: " + update);
             serviceResponse(update.getMessage().getChatId(), "❗️Данный вид сообщения не поддерживается.");
-        } else {
-            val chatId = message.getChatId();
-            if (prometheusChats.containsKey(chatId)) {
-                val sessionResponse = prometheusChats.get(chatId).prometheusSessionProcess(message.getText());
-                if (sessionResponse == null) {
-                    log.info("Отправляем данные по прометею: {}", prometheusChats.get(chatId).getRequestData().toString());
-                    prometheusChats.remove(chatId);
-                } else {
-                    serviceResponse(chatId, sessionResponse);
-                }
-            } else if (message.getText().toLowerCase().contains("прометей")) {
-                var newSession = new PrometheusSession(update);
-                serviceResponse(chatId, newSession.prometheusSessionProcess(""));
-                prometheusChats.put(chatId, newSession);
-            } else {
-                processTextMessage(update);
-            }
+            return;
         }
+        // Prometheus case
+        val chatId = message.getChatId();
+        if (prometheusChats.containsKey(chatId)) {
+            val sessionResponse = prometheusChats.get(chatId).sessionProcess(message.getText());
+            if (sessionResponse == null) {
+                log.info("Отправляем данные по прометею: {}", prometheusChats.get(chatId).getRequestData().toString());
+                updateProducer.produceSessionRequest(PROMETHEUS_REQUEST_UPDATE, prometheusChats.get(chatId));
+                serviceResponse(update.getMessage().getChatId(), "Обрабатывается запрос на расчет стоимости...");
+                prometheusChats.remove(chatId);
+            } else {
+                serviceResponse(chatId, sessionResponse);
+            }
+            return;
+        } else if (message.getText().toLowerCase().contains("прометей")) {
+            var newSession = new PrometheusSession(update);
+            serviceResponse(chatId, newSession.sessionProcess(""));
+            prometheusChats.put(chatId, newSession);
+            return;
+        }
+
+        // Default case
+        processTextMessage(update);
     }
 
     public void view(SendMessage sendMessage) {

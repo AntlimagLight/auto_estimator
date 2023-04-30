@@ -9,11 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class PrometheusSession {
+public class PrometheusSession implements DialogSession {
 
     private final long chatID;
     private int stage;
-
     private final PrometheusRequestData requestData;
 
     public PrometheusSession(Update update) {
@@ -22,7 +21,7 @@ public class PrometheusSession {
         this.requestData = new PrometheusRequestData(update);
     }
 
-    public String prometheusSessionProcess(String userAnswer) {
+    public String sessionProcess(String userAnswer) {
         return switch (stage) {
             case (0) -> stage0();
             case (1) -> stage1(userAnswer);
@@ -35,12 +34,12 @@ public class PrometheusSession {
         };
     }
 
-    public String stage0() {
+    private String stage0() {
         stage++;
         return "Диаметр дымохода?";
     }
 
-    public String stage1(String userAnswer) {
+    private String stage1(String userAnswer) {
         List<Integer> validValues = new ArrayList<>();
         validValues.add(120);
         validValues.add(150);
@@ -56,14 +55,14 @@ public class PrometheusSession {
         }
     }
 
-    public String stage2(String userAnswer) {
+    private String stage2(String userAnswer) {
         val height = Integer.parseInt(userAnswer);
         requestData.setHeight(height);
         stage++;
         return "Нужна ли покрывная плита? да/нет";
     }
 
-    public String stage3(String userAnswer) {
+    private String stage3(String userAnswer) {
         switch (userAnswer.toLowerCase()) {
             case "да":
                 requestData.setCoverPlate(true);
@@ -78,7 +77,7 @@ public class PrometheusSession {
         }
     }
 
-    public String stage4(String userAnswer) {
+    private String stage4(String userAnswer) {
         switch (userAnswer.toLowerCase()) {
             case "да":
                 requestData.setUmbrella(true);
@@ -93,7 +92,7 @@ public class PrometheusSession {
         }
     }
 
-    public String stage5(String userAnswer) {
+    private String stage5(String userAnswer) {
         switch (userAnswer.toLowerCase()) {
             case "да":
                 requestData.setReinforcement(true);
@@ -108,7 +107,7 @@ public class PrometheusSession {
         }
     }
 
-    public String stage6(String userAnswer) {
+    private String stage6(String userAnswer) {
         switch (userAnswer.toLowerCase()) {
             case "да":
                 requestData.setVentilationDuct(true);
