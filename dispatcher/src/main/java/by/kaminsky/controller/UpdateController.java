@@ -31,23 +31,17 @@ public class UpdateController {
     }
 
     public void processUpdate(Update update) {
+        if (!baseValidation(update)) {
+            return;
+        }
 
-        // Base validation
-        if (update == null) {
-            log.warn("Received update is null");
-            return;
-        }
         val message = update.getMessage();
-        if (message == null || message.getText() == null) {
-            log.warn("Message type not supported: " + update);
-            serviceResponse(update.getMessage().getChatId(), "❗️Данный вид сообщения не поддерживается.");
-            return;
-        }
         val text = message.getText();
         val chatId = message.getChatId();
 
         // StopSessions case
-        if (text.toLowerCase().contains("stop") || text.toLowerCase().contains("стоп")){
+        if (text.toLowerCase().contains("stop") || text.toLowerCase().contains("стоп")
+                || text.toLowerCase().contains("отмена") || text.toLowerCase().contains("cancel")) {
             prometheusChats.remove(chatId);
             log.info("User sessions cleared {}", chatId);
             return;
@@ -85,12 +79,26 @@ public class UpdateController {
         serviceResponse(update.getMessage().getChatId(), "Идет обработка...");
     }
 
-    public void serviceResponse(Long chatId, String text) {
+    private void serviceResponse(Long chatId, String text) {
         var response = new SendMessage();
         response.setChatId(chatId.toString());
         response.setText(text);
         view(response);
     }
+
+    private boolean baseValidation(Update update) {
+        if (update == null || !update.hasMessage()) {
+            log.warn("Received update is null or not have message");
+            return false;
+        }
+        if (!update.getMessage().hasText()) {
+            log.warn("Message type not supported: " + update);
+            serviceResponse(update.getMessage().getChatId(), "❗️Данный вид сообщения не поддерживается.");
+            return false;
+        }
+        return true;
+    }
+
 
     //TODO реализовать метод для чистки сессий по таймауту
 }
