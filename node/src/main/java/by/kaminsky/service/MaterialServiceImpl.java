@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static by.kaminsky.utils.ValidationUtils.assertExistence;
 import static by.kaminsky.utils.ValidationUtils.assertNotExistence;
@@ -19,6 +20,7 @@ public class MaterialServiceImpl implements MaterialService {
 
     private final MaterialsRepository materialsRepository;
 
+    @Override
     @Transactional
     public void save(Material material) {
         log.info("Save: {}, {}", material.getId(), material.getName());
@@ -27,6 +29,7 @@ public class MaterialServiceImpl implements MaterialService {
         materialsRepository.save(assertExistence(material, "Missing material to save"));
     }
 
+    @Override
     @Transactional
     public void update(Long id, Material material) {
         log.info("Update: {}, {}", material.getId(), material.getName());
@@ -35,28 +38,37 @@ public class MaterialServiceImpl implements MaterialService {
         materialsRepository.save(material);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Material getById(Long id) {
         log.info("Get by id: {}", id);
         return assertExistence(materialsRepository.findById(id), "Material not found");
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<Material> getAllByName(String name) {
         return materialsRepository.findAllByName(name);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Material getByNameAndSpecific(String name, String specific) {
         log.info("Get by name and specific: {}, {}", name, specific);
         return assertExistence(materialsRepository.findByNameAndSpecific(name, specific), "Material not found");
     }
 
+    @Override
     @Transactional
     public void delete(Long id) {
         log.info("Deleted: {}", id);
         assertExistence(materialsRepository.findById(id), "Material not found");
         materialsRepository.deleteById(id);
+    }
+
+    @Override
+    public Optional<Material> getOptionalByNameAndSpecific(String name, String specific) {
+        return materialsRepository.findByNameAndSpecific(name, specific);
     }
 
 }

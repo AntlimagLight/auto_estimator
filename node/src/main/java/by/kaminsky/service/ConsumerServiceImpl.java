@@ -1,14 +1,14 @@
 package by.kaminsky.service;
 
 import by.kaminsky.dto.PrometheusRequestData;
+import by.kaminsky.entity.Material;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import static by.kaminsky.constants.RabbitQueue.PROMETHEUS_REQUEST_UPDATE;
-import static by.kaminsky.constants.RabbitQueue.TEXT_MESSAGE_UPDATE;
+import static by.kaminsky.constants.RabbitQueue.*;
 
 @Service
 @Slf4j
@@ -30,6 +30,13 @@ public class ConsumerServiceImpl implements ConsumerService {
         log.info("NODE: prometheus request consumed");
         mainService.processPrometheusRequest(prometheusRequestData);
 
+    }
+
+    @Override
+    @RabbitListener(queues = NEW_MATERIALS)
+    public void consumeNewMaterial(Material material) {
+        log.info("NODE: new material " + material.getName() + " consumed");
+        mainService.processSaveMaterialFromQueue(material);
     }
 
 }

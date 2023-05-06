@@ -12,4 +12,6 @@ public interface MaterialsRepository extends JpaRepository<Material, Long> {
 
     Optional<Material> findByNameAndSpecific(String name, String specific);
 
+    Boolean existsMaterialByNameAndSpecific(String name, String specific);
+
 }

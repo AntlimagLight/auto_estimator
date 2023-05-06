@@ -41,7 +41,7 @@ public class MainServiceImpl implements MainService {
                     producerService.generateTextAnswer(update, "Здесь будет список доступных команд!");
             case SAVE -> {
                 try {
-                    processSave(update, separator);
+                    processSaveFromMassage(update, separator);
                 } catch (RuntimeException e) {
                     log.error("SAVE: Unsupported input format: " + e.getClass() + " " + e.getMessage());
                     producerService.generateTextAnswer(update, "❗️Неверный формат ввода при сохранении материала!");
@@ -49,7 +49,7 @@ public class MainServiceImpl implements MainService {
             }
             case UPDATE -> {
                 try {
-                    processUpdate(update, separator);
+                    processUpdateFromMassage(update, separator);
                 } catch (RuntimeException e) {
                     log.error("UPDATE: Unsupported input format: " + e.getClass() + " " + e.getMessage());
                     producerService.generateTextAnswer(update, "❗️Неверный формат ввода при обновлении материала!");
@@ -57,7 +57,7 @@ public class MainServiceImpl implements MainService {
             }
             case DELETE -> {
                 try {
-                    processDelete(update, separator);
+                    processDeleteFromMassage(update, separator);
                 } catch (RuntimeException e) {
                     log.error("DELETE: Unsupported input format: " + e.getClass() + " " + e.getMessage());
                     producerService.generateTextAnswer(update, "❗️Неверный формат ввода при удалении материала!");
@@ -76,8 +76,8 @@ public class MainServiceImpl implements MainService {
                 }
             }
         }
-
     }
+
 
     @Override
     public void processPrometheusRequest(PrometheusRequestData prometheusRequestData) {
@@ -85,7 +85,20 @@ public class MainServiceImpl implements MainService {
         producerService.generateTextAnswer(prometheusRequestData.getUpdate(), prometheusRequestData.toString());
     }
 
-    private void processSave(Update update, char separator) {
+    @Override
+    public void processSaveMaterialFromQueue(Material material) {
+        material.setLastUpdate(LocalDateTime.now());
+        var optional = materialService.getOptionalByNameAndSpecific(material.getName(),
+                material.getSpecific());
+        if (optional.isEmpty()) {
+            materialService.save(material);
+        } else {
+            materialService.update(optional.get().getId(), material);
+        }
+
+    }
+
+    private void processSaveFromMassage(Update update, char separator) {
         String[] textAndPrefix = update.getMessage().getText().split(Character.toString(separator), 2);
         String[] content = textAndPrefix[1].split(";", 4);
         log.info("Content to save: {}, {}, {}, {}", content[0], content[1], content[2], content[3]);
@@ -96,7 +109,7 @@ public class MainServiceImpl implements MainService {
 
     }
 
-    private void processUpdate(Update update, char separator) {
+    private void processUpdateFromMassage(Update update, char separator) {
         String[] textAndPrefix = update.getMessage().getText().split(Character.toString(separator), 2);
         String[] content = textAndPrefix[1].split(";", 5);
         log.info("ID to update: {}, Content to save: {}, {}, {}, {}", content[0], content[1], content[2],
@@ -107,7 +120,7 @@ public class MainServiceImpl implements MainService {
         producerService.generateTextAnswer(update, "Материал обновлен");
     }
 
-    private void processDelete(Update update, char separator) {
+    private void processDeleteFromMassage(Update update, char separator) {
         String[] textAndPrefix = update.getMessage().getText().split(Character.toString(separator), 2);
         log.info("ID to del: {}", textAndPrefix[1]);
         materialService.delete(Long.parseLong(textAndPrefix[1]));
@@ -118,7 +131,7 @@ public class MainServiceImpl implements MainService {
     private Material createMaterial(String name, String specific, Double cost, String packaging) {
         return Material.builder()
                 .name(name.toLowerCase())
-                .specific(specific.toLowerCase())
+                .specific(specific)
                 .cost(new BigDecimal(cost))
                 .packaging(packaging)
                 .lastUpdate(LocalDateTime.now())
@@ -127,7 +140,7 @@ public class MainServiceImpl implements MainService {
 
     private String describeMaterial(Material material) {
         return "ID №: " + material.getId() + "\n" +
-                "Название материала:  " + material.getName() + " " + material.getSpecific() + "\n" +
+                "Название:  " + material.getName() + "\n Детали: " + material.getSpecific() + "\n" +
                 "Цена за 1 " + material.getPackaging() + " " + material.getCost() + " $\n";
     }
 }
