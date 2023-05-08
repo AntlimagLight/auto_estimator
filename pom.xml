@@ -7,7 +7,7 @@
     <version>1.0</version>
     <modules>
         <module>dispatcher</module>
-        <module>common-rabbitmq</module>
+        <module>auto_estimator_common_lib</module>
         <module>node</module>
         <module>parser-assembler</module>
     </modules>

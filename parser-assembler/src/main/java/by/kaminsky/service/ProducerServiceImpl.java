@@ -16,8 +16,8 @@ public class ProducerServiceImpl implements ProducerService {
 
     @Override
     public void producerAnswer(MaterialDto materialDto) {
-        rabbitTemplate.convertAndSend(NEW_MATERIALS, materialDto);
         log.info("send " + materialDto);
+        rabbitTemplate.convertAndSend(NEW_MATERIALS, materialDto);
     }
 
 }

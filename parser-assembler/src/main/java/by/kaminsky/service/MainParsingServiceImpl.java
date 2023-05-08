@@ -14,10 +14,14 @@ public class MainParsingServiceImpl implements MainParsingService {
     private final ProducerService producerService;
     private final PechiBaniParseService pechiBaniParseService;
 
+    private final BelwentParseService belwentParseService;
+
     @Override
-    @Scheduled(initialDelayString = "10000", fixedDelayString = "300000")
+    @Scheduled(initialDelayString = "${parse.init.timeout}", fixedDelayString = "${parse.scheduled.timeout}")
     public void startParseAll() {
         log.info("Start parsing!");
-        pechiBaniParseService.startParse().forEach(producerService::producerAnswer);
+//        pechiBaniParseService.startParse().forEach(producerService::producerAnswer);
+        belwentParseService.startParse().forEach(producerService::producerAnswer);
+
     }
 }

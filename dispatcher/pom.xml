@@ -33,7 +33,7 @@
         </dependency>
         <dependency>
             <groupId>by.kaminsky</groupId>
-            <artifactId>common-rabbitmq</artifactId>
+            <artifactId>auto_estimator_common_lib</artifactId>
             <version>1.0</version>
         </dependency>
         <dependency>

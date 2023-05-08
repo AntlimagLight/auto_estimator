@@ -8,8 +8,8 @@
         <artifactId>auto_estimator</artifactId>
         <version>1.0</version>
     </parent>
-    <artifactId>common-rabbitmq</artifactId>
-    <name>rabbitmq</name>
+    <artifactId>auto_estimator_common_lib</artifactId>
+    <name>auto_estimator_common_lib</name>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
