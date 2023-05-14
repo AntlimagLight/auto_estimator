@@ -1,40 +1,46 @@
 package by.kaminsky.service;
 
 import by.kaminsky.dto.MaterialDto;
+import by.kaminsky.utils.PageElements;
 import by.kaminsky.utils.ParseOrder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BelwentParseService implements ParseService {
+
+    private final ParseOrderService parseOrderService;
+
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing belwent");
-//        var orders = prepareParseOrders();
-//        var orders = new ArrayList<ParseOrder>();
+        var ordersRoundTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_round.txt");
+        var ordersEllipseTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_ellipse.txt");
         List<MaterialDto> materials = new LinkedList<>();
-        materials.addAll(parseRoundBareTubes(new ParseOrder("труба", "Труба нерж. L=1000, ст.304",
-                "шт.", "https://belwent.by/ksr10.html")));
-
-//        if (orders == null) {
-//            log.warn("No materials for parse");
-//        } else {
-//            for (var order : orders) {
-//                materials.add(parseMaterialFromBelwent(order));
-//            }
-//        }
-
+        for (var order : ordersRoundTubes) {
+            materials.addAll(parseRoundBareTubes(order));
+        }
+        for (var order : ordersEllipseTubes) {
+            materials.addAll(parseEllipseBareTubes(order));
+        }
+        if (materials.isEmpty()) {
+            log.warn(this.getClass().getName() + " : No orders for parse");
+        }
         return materials;
     }
 
@@ -48,15 +54,11 @@ public class BelwentParseService implements ParseService {
     private List<MaterialDto> parseRoundBareTubes(ParseOrder parseOrder) {
         try {
             val doc = Jsoup.connect(parseOrder.getUrl()).get();
-            val elements = doc.select("option");
-            val priceElements = elements.stream()
-                    .map(element -> {
-                        var string = element.val();
-                        return Double.parseDouble(string.substring(string.indexOf('*') + 1));
-                    }).toList();
-            val texts = elements.stream().map(Element::text).toList();
+            val pageElements = extractPageElements(doc);
             val basePrice = Double.parseDouble(doc.select("span.shk-price").get(0).text()) *
-                    priceElements.get(0) * priceElements.get(17) * priceElements.get(22);
+                    pageElements.getPriceElements().get(0) *
+                    pageElements.getPriceElements().get(17) *
+                    pageElements.getPriceElements().get(22);
             Map<Integer, String> keyElements = new HashMap<>();
             keyElements.put(4, "д120");
             keyElements.put(7, "д150");
@@ -67,10 +69,10 @@ public class BelwentParseService implements ParseService {
             List<MaterialDto> result = new LinkedList<>();
             for (Map.Entry<Integer, String> entry : keyElements.entrySet()) {
                 result.add(new MaterialDto(parseOrder.getMaterialName() + " " + entry.getValue(),
-                        parseOrder.getMaterialAdditionalSpecific() + " " + texts.get(entry.getKey()) + ", "
-                                + texts.get(22), parseOrder.getMaterialPackaging(),
-                        BigDecimal.valueOf(basePrice * priceElements.get(entry.getKey()))
-                                .setScale(2, RoundingMode.FLOOR)));
+                        parseOrder.getMaterialAdditionalSpecific() + " " + pageElements.getTexts().get(entry.getKey()) + ", "
+                                + pageElements.getTexts().get(22), parseOrder.getMaterialPackaging(),
+                        BigDecimal.valueOf(basePrice * pageElements.getPriceElements().get(entry.getKey())
+                                + parseOrder.getCostModifier()).setScale(2, RoundingMode.UP)));
             }
             return result;
         } catch (IOException e) {
@@ -78,37 +80,46 @@ public class BelwentParseService implements ParseService {
         }
     }
 
-//    private List<ParseOrder> prepareParseOrders() {
-//        List<ParseOrder> orders = new LinkedList<>();
-//        Scanner scanner = null;
-//        try {
-//            String sep = File.separator;
-//            File file = new File(Paths.get("parser-assembler" + sep + "src" + sep +
-//                    "main" + sep + "resources" + sep + "pechibani.txt").toAbsolutePath().toString());
-//            log.debug("Pechibani file path: " + file.getPath());
-//            scanner = new Scanner(file);
-//            var separatorLine = false;
-//            do {
-//                if (separatorLine) {
-//                    log.info(">" + scanner.nextLine());
-//                } else {
-//                    separatorLine = true;
-//                }
-//                String[] lineBlock = new String[4];
-//                for (var i = 0; i < lineBlock.length; i++) {
-//                    lineBlock[i] = scanner.hasNext() ? scanner.nextLine() : null;
-//                }
-//                if (Arrays.stream(lineBlock).anyMatch(Objects::isNull)) break;
-//                log.debug("Creating parse order: {}, {}, {}, {}", lineBlock[0], lineBlock[1], lineBlock[2], lineBlock[3]);
-//                orders.add(new ParseOrder(lineBlock[0], lineBlock[1], lineBlock[2], lineBlock[3]));
-//            } while (scanner.hasNext());
-//            return orders;
-//        } catch (IOException e) {
-//            log.error("Exception while scanning a file {} {}", e.getClass(), e.getMessage());
-//            return null;
-//        } finally {
-//            if (scanner != null) scanner.close();
-//        }
-//    }
+    private List<MaterialDto> parseEllipseBareTubes(ParseOrder parseOrder) {
+        try {
+            val doc = Jsoup.connect(parseOrder.getUrl()).get();
+            val pageElements = extractPageElements(doc);
+            val basePrice = Double.parseDouble(doc.select("span.shk-price").get(0).text()) *
+                    pageElements.getPriceElements().get(0) *
+                    pageElements.getPriceElements().get(7) *
+                    pageElements.getPriceElements().get(12);
+            Map<Integer, String> keyElements = new HashMap<>();
+            keyElements.put(1, "д100/200");
+            keyElements.put(2, "д110/230");
+            keyElements.put(3, "д120/230");
+            keyElements.put(4, "д130/240");
+            List<MaterialDto> result = new LinkedList<>();
+            for (Map.Entry<Integer, String> entry : keyElements.entrySet()) {
+                result.add(new MaterialDto(parseOrder.getMaterialName() + " " + entry.getValue(),
+                        parseOrder.getMaterialAdditionalSpecific() + " " + pageElements.getTexts().get(entry.getKey()) + ", "
+                                + pageElements.getTexts().get(12), parseOrder.getMaterialPackaging(),
+                        BigDecimal.valueOf(basePrice * pageElements.getPriceElements().get(entry.getKey()) + parseOrder.getCostModifier())
+                                .setScale(2, RoundingMode.UP)));
+            }
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private PageElements extractPageElements(Document document) {
+        val elements = document.select("option");
+        val priceElements = elements.stream()
+                .map(element -> {
+                    var string = element.val();
+                    return Double.parseDouble(string.substring(string.indexOf('*') + 1));
+                }).toList();
+        val texts = elements.stream().map(Element::text).toList();
+        for (var i = 0; i < elements.size(); i++) {
+            log.info(priceElements.get(i).toString() + " // " + texts.get(i));
+        }
+        return new PageElements(priceElements, texts);
+    }
+
 
 }

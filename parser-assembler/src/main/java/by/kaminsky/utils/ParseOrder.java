@@ -11,6 +11,7 @@ public class ParseOrder {
 
     private String materialName;
     private String materialAdditionalSpecific;
+    private Double costModifier;
     private String materialPackaging;
     private String url;
 
