@@ -10,12 +10,15 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @ToString
+@Builder
 public class MaterialDto {
 
     private String name;
     private String specific;
     private String packaging;
     private BigDecimal cost;
+    private String source;
+
 
 }
 

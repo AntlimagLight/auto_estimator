@@ -37,7 +37,7 @@ public class ParseOrderServiceImpl implements ParseOrderService {
                     lineBlock[i] = scanner.hasNext() ? scanner.nextLine() : null;
                 }
                 if (Arrays.stream(lineBlock).anyMatch(Objects::isNull)) break;
-                log.info("Creating parse order: {}, {}, {}, {}, {}", lineBlock[0], lineBlock[1], lineBlock[2],
+                log.debug("Creating parse order: {}, {}, {}, {}, {}", lineBlock[0], lineBlock[1], lineBlock[2],
                         lineBlock[3], lineBlock[4]);
                 Double addCost = lineBlock[2].equals("") ? 0 : Double.parseDouble(lineBlock[2]);
                 orders.add(new ParseOrder(lineBlock[0], lineBlock[1], addCost, lineBlock[3], lineBlock[4]));

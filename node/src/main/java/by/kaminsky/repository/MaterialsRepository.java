@@ -10,7 +10,7 @@ public interface MaterialsRepository extends JpaRepository<Material, Long> {
 
     List<Material> findAllByName(String name);
 
-    Optional<Material> findByNameAndSpecific(String name, String specific);
+    Optional<Material> findByNameAndSpecificAndSource(String name, String specific, String source);
 
     Boolean existsMaterialByNameAndSpecific(String name, String specific);
 

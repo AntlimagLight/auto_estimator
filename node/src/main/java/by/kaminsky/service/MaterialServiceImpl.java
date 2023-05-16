@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,8 +25,9 @@ public class MaterialServiceImpl implements MaterialService {
     @Transactional
     public void save(Material material) {
         log.info("Save: {}, {}", material.getId(), material.getName());
-        assertNotExistence(materialsRepository.findByNameAndSpecific(material.getName(), material.getSpecific()),
-                "Material already exist");
+        assertNotExistence(materialsRepository.findByNameAndSpecificAndSource(material.getName(),
+                        material.getSpecific(), material.getSource()), "Material already exist");
+        material.setLastUpdate(LocalDateTime.now());
         materialsRepository.save(assertExistence(material, "Missing material to save"));
     }
 
@@ -35,6 +37,7 @@ public class MaterialServiceImpl implements MaterialService {
         log.info("Update: {}, {}", material.getId(), material.getName());
         assertExistence(materialsRepository.findById(id), "Material not found");
         material.setId(id);
+        material.setLastUpdate(LocalDateTime.now());
         materialsRepository.save(material);
     }
 
@@ -52,13 +55,6 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Material getByNameAndSpecific(String name, String specific) {
-        log.info("Get by name and specific: {}, {}", name, specific);
-        return assertExistence(materialsRepository.findByNameAndSpecific(name, specific), "Material not found");
-    }
-
-    @Override
     @Transactional
     public void delete(Long id) {
         log.info("Deleted: {}", id);
@@ -67,8 +63,8 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     @Override
-    public Optional<Material> getOptionalByNameAndSpecific(String name, String specific) {
-        return materialsRepository.findByNameAndSpecific(name, specific);
+    public Optional<Material> getOptionalByNameAndSpecificAndSource(String name, String specific, String source) {
+        return materialsRepository.findByNameAndSpecificAndSource(name, specific, source);
     }
 
 }

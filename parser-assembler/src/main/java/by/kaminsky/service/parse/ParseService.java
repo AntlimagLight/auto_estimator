@@ -1,4 +1,4 @@
-package by.kaminsky.service;
+package by.kaminsky.service.parse;
 
 import by.kaminsky.dto.MaterialDto;
 

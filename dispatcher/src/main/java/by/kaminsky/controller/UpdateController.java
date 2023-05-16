@@ -5,6 +5,7 @@ import by.kaminsky.service.UpdateProducer;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -76,13 +77,15 @@ public class UpdateController {
 
     private void processTextMessage(Update update) {
         updateProducer.produce(TEXT_MESSAGE_UPDATE, update);
-        serviceResponse(update.getMessage().getChatId(), "Идет обработка...");
     }
 
     private void serviceResponse(Long chatId, String text) {
         var response = new SendMessage();
         response.setChatId(chatId.toString());
         response.setText(text);
+        response.setParseMode(ParseMode.MARKDOWNV2);
+        response.enableMarkdownV2(true);
+        response.disableNotification();
         view(response);
     }
 

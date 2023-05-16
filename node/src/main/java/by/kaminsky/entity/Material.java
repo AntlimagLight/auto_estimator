@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(name = "materials", indexes = @Index(columnList = "material_name", name = "materials_name_idx"),
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"material_name", "specific"})})
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"material_name", "specific", "source"})})
 public class Material {
 
     @Id
@@ -28,6 +28,8 @@ public class Material {
     private String packaging;
     @Column(name = "cost", nullable = false)
     private BigDecimal cost;
+    @Column(name = "source", nullable = false)
+    private String source;
     @Column(name = "lastupd", nullable = false)
     private LocalDateTime lastUpdate;
 

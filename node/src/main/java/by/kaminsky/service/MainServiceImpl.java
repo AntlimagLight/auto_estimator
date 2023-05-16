@@ -3,6 +3,7 @@ package by.kaminsky.service;
 import by.kaminsky.dto.PrometheusRequestData;
 import by.kaminsky.entity.Material;
 import by.kaminsky.enums.ServiceCommand;
+import by.kaminsky.enums.SourceCompanies;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @SuppressWarnings("SameParameterValue")
 @Service
@@ -87,9 +87,8 @@ public class MainServiceImpl implements MainService {
 
     @Override
     public void processSaveMaterialFromQueue(Material material) {
-        material.setLastUpdate(LocalDateTime.now());
-        var optional = materialService.getOptionalByNameAndSpecific(material.getName(),
-                material.getSpecific());
+        var optional = materialService.getOptionalByNameAndSpecificAndSource(material.getName(),
+                material.getSpecific(), material.getSource());
         if (optional.isEmpty()) {
             materialService.save(material);
         } else {
@@ -134,13 +133,14 @@ public class MainServiceImpl implements MainService {
                 .specific(specific)
                 .cost(new BigDecimal(cost))
                 .packaging(packaging)
-                .lastUpdate(LocalDateTime.now())
+                .source(SourceCompanies.KAMINSKY.toString())
                 .build();
     }
 
     private String describeMaterial(Material material) {
-        return "ID №: " + material.getId() + "\n" +
-                "Название:  " + material.getName() + "\n Детали: " + material.getSpecific() + "\n" +
-                "Цена за 1 " + material.getPackaging() + " " + material.getCost() + " $\n";
+        return "<u>ID №: " + material.getId() + "</u> | " + material.getName() + "\n" +
+                "<b>Источник:</b> <i>" + material.getSource() + "</i>\n" +
+                "<i>" + material.getSpecific() + "</i>\n" +
+                "<i>Цена за 1 " + material.getPackaging() + " :</i> <b>" + material.getCost() + " BYN</b>\n";
     }
 }

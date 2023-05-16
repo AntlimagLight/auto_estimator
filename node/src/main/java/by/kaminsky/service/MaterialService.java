@@ -15,11 +15,9 @@ public interface MaterialService {
 
     List<Material> getAllByName(String name);
 
-    Material getByNameAndSpecific(String name, String specific);
-
     void delete(Long id);
 
-    Optional<Material> getOptionalByNameAndSpecific(String name, String specific);
+    Optional<Material> getOptionalByNameAndSpecificAndSource(String name, String specific, String source);
 
 
 }
