@@ -1,4 +1,4 @@
-package by.kaminsky.utils;
+package by.kaminsky.helper_objects;
 
 import lombok.*;
 

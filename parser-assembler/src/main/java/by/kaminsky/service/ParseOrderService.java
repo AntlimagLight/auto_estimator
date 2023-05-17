@@ -1,6 +1,6 @@
 package by.kaminsky.service;
 
-import by.kaminsky.utils.ParseOrder;
+import by.kaminsky.helper_objects.ParseOrder;
 
 import java.util.List;
 

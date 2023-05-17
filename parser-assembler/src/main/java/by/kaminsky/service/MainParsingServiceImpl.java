@@ -25,9 +25,9 @@ public class MainParsingServiceImpl implements MainParsingService {
     @Scheduled(initialDelayString = "${parse.init.timeout}", fixedDelayString = "${parse.scheduled.timeout}")
     public void startParseAll() {
         log.info("Start parsing!");
+        belwentParseService.startParse().forEach(producerService::producerAnswer);
         kaminov100ParseService.startParse().forEach(producerService::producerAnswer);
         pechiBaniParseService.startParse().forEach(producerService::producerAnswer);
-        belwentParseService.startParse().forEach(producerService::producerAnswer);
 
     }
 }

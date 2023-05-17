@@ -3,7 +3,7 @@ package by.kaminsky.service.parse;
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
 import by.kaminsky.service.ParseOrderService;
-import by.kaminsky.utils.ParseOrder;
+import by.kaminsky.helper_objects.ParseOrder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -41,7 +41,7 @@ public class PechiBaniParseService implements ParseService {
         try {
             val doc = Jsoup.connect(parseOrder.getUrl()).get();
             val elements = doc.select("span.micro-price");
-            val price = BigDecimal.valueOf(Double.parseDouble(elements.get(2).text().replace(',','.')) +
+            val price = BigDecimal.valueOf(Double.parseDouble(elements.get(2).text().replace(',', '.')) +
                     parseOrder.getCostModifier());
             val specific = elements.get(0).text();
             return MaterialDto.builder()
@@ -54,13 +54,13 @@ public class PechiBaniParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return null;
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return null;
         }
     }

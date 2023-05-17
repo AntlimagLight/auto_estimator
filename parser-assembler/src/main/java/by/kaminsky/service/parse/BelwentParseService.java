@@ -3,8 +3,9 @@ package by.kaminsky.service.parse;
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
 import by.kaminsky.service.ParseOrderService;
-import by.kaminsky.utils.PageElements;
-import by.kaminsky.utils.ParseOrder;
+import by.kaminsky.helper_objects.PageElements;
+import by.kaminsky.helper_objects.ParseOrder;
+import by.kaminsky.util.MaterialUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -31,11 +32,13 @@ public class BelwentParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing belwent");
-        var ordersRoundTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_round.txt");
-        var ordersEllipseTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_ellipse.txt");
-        var ordersInsulatedTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_insulated.txt");
-        var ordersBlackTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_black.txt");
-        var ordersFasteners = parseOrderService.prepareParseOrdersAndCheckForContent("belwent_fasteners.txt");
+        var ordersRoundTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_round.txt");
+        var ordersEllipseTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_ellipse.txt");
+        var ordersInsulatedTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_insulated.txt");
+        var ordersBlackTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_black.txt");
+        var ordersFasteners = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_fasteners.txt");
+        var ordersSchiedelIsokern = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/schiedel_isokern.txt");
+        var additionalMaterials = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/additional_materials.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : ordersRoundTubes) {
             materials.addAll(parseRoundBareTubes(order));
@@ -52,11 +55,42 @@ public class BelwentParseService implements ParseService {
         for (var order : ordersFasteners) {
             materials.addAll(parseFasteners(order));
         }
+        for (var order : ordersSchiedelIsokern) {
+            val material = parseMaterialFromSchiedelIsokern(order);
+            if (material != null) materials.add(material);
+        }
+        materials.addAll(MaterialUtils.convertOrdersToMaterials(additionalMaterials, SourceCompanies.BELWENT));
         if (materials.isEmpty()) {
             log.warn(this.getClass().getName() + " : No orders for parse");
         }
-
         return materials;
+    }
+
+    private MaterialDto parseMaterialFromSchiedelIsokern(ParseOrder parseOrder) {
+        try {
+            val doc = Jsoup.connect(parseOrder.getUrl()).get();
+            val price = BigDecimal.valueOf(Double.parseDouble(doc.select("span[data-qaid=product_price]")
+                    .get(0).text().replace(',', '.')) + parseOrder.getCostModifier());
+            val specific = doc.select("span[data-qaid=product_name]").get(0).text();
+            return MaterialDto.builder()
+                    .name(parseOrder.getMaterialName().toLowerCase())
+                    .specific(specific + " " + parseOrder.getMaterialAdditionalSpecific())
+                    .packaging(parseOrder.getMaterialPackaging())
+                    .cost(price)
+                    .source(SourceCompanies.BELWENT_KERAM.toString())
+                    .build();
+        } catch (IOException e) {
+            log.error("IOException: {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IndexOutOfBoundsException e) {
+            log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
+                    parseOrder.getUrl());
+            return null;
+        } catch (RuntimeException e) {
+            log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
+                    parseOrder.getUrl());
+            return null;
+        }
     }
 
     private List<MaterialDto> parseRoundBareTubes(ParseOrder parseOrder) {
@@ -90,13 +124,13 @@ public class BelwentParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         }
     }
@@ -130,13 +164,13 @@ public class BelwentParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         }
     }
@@ -176,13 +210,13 @@ public class BelwentParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         }
     }
@@ -215,13 +249,13 @@ public class BelwentParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         }
     }
@@ -255,13 +289,13 @@ public class BelwentParseService implements ParseService {
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e){
+        } catch (IndexOutOfBoundsException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         } catch (RuntimeException e) {
             log.error("Unidentified error while parsing the page: {} : {}", parseOrder.getMaterialName(),
-                    parseOrder.getUrl() );
+                    parseOrder.getUrl());
             return new LinkedList<>();
         }
     }
@@ -279,8 +313,5 @@ public class BelwentParseService implements ParseService {
         }
         return new PageElements(priceElements, texts);
     }
-
-
-
 
 }
