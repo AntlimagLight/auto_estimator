@@ -9,7 +9,9 @@ public enum SourceCompanies {
     PECHNOYCENTR("pcentr.by"),
     PROPECHKIN("woodfuel.by"),
     STALNOY("stalnoy.by"),
-    DFABR("dfarb.by");
+    BY7745("7745.by"),
+    MILE("mile.by"),
+    SAMSTROY("samstroy.by");
     private final String value;
 
     SourceCompanies(String value) {

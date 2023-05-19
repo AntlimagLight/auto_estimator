@@ -1,8 +1,6 @@
 package by.kaminsky.service;
 
-import by.kaminsky.service.parse.BelwentParseService;
-import by.kaminsky.service.parse.Kaminov100ParseService;
-import by.kaminsky.service.parse.PechiBaniParseService;
+import by.kaminsky.service.assembler.ServiceAssembler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,19 +13,24 @@ import org.springframework.stereotype.Service;
 public class MainParsingServiceImpl implements MainParsingService {
 
     private final ProducerService producerService;
-
-    private final PechiBaniParseService pechiBaniParseService;
-    private final BelwentParseService belwentParseService;
-    private final Kaminov100ParseService kaminov100ParseService;
-
+    private final ServiceAssembler serviceAssembler;
 
     @Override
     @Scheduled(initialDelayString = "${parse.init.timeout}", fixedDelayString = "${parse.scheduled.timeout}")
     public void startParseAll() {
         log.info("Start parsing!");
-        belwentParseService.startParse().forEach(producerService::producerAnswer);
-        kaminov100ParseService.startParse().forEach(producerService::producerAnswer);
-        pechiBaniParseService.startParse().forEach(producerService::producerAnswer);
+
+        serviceAssembler.disableParsingService("PechiBaniParseService");
+        serviceAssembler.disableParsingService("BelwentParseService");
+        serviceAssembler.disableParsingService("Kaminov100ParseService");
+        serviceAssembler.disableParsingService("By7745ParseService");
+        serviceAssembler.disableParsingService("MileParseService");
+        serviceAssembler.disableParsingService("SamstroyParseService");
+        serviceAssembler.disableParsingService("StalnoyParseService ");
+
+        for (var service: serviceAssembler.getEnabledParsingServices()) {
+            service.startParse().forEach(producerService::producerAnswer);
+        }
 
     }
 }

@@ -138,8 +138,8 @@ public class MainServiceImpl implements MainService {
     }
 
     private String describeMaterial(Material material) {
-        return "<u>ID №: " + material.getId() + "</u> | " + material.getName() + "\n" +
-                "<b>Источник:</b> <i>" + material.getSource() + "</i>\n" +
+        return "<u>ID №: " + material.getId() + "</u> | " + material.getName() + " | " + material.getLastUpdate().toLocalDate() +
+                "\n" + "<b>Источник:</b> <i>" + material.getSource() + "</i>\n" +
                 "<i>" + material.getSpecific() + "</i>\n" +
                 "<i>Цена за 1 " + material.getPackaging() + " :</i> <b>" + material.getCost() + " BYN</b>\n";
     }
