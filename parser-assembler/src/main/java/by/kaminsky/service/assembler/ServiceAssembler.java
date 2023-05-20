@@ -7,6 +7,8 @@ import java.util.List;
 public interface ServiceAssembler {
 
     List<ParseService> getEnabledParsingServices();
+
     void disableParsingService(String string);
+
     void enableParsingService(String string);
 }
