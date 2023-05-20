@@ -26,14 +26,12 @@ public class StalnoyParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing stalnoy");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("stalnoy.txt");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/stalnoy.txt");
         List<MaterialDto> materials = new LinkedList<>(parseSheetsFromStalnoy(orders.get(0)));
-        for (var i = 1; i < orders.size(); i++){
+        for (var i = 1; i < orders.size(); i++) {
             materials.addAll(parseMaterialsFromStalnoy(orders.get(i)));
         }
-        if (materials.isEmpty()) {
-            log.warn(this.getClass().getName() + " : No orders for parse");
-        }
+        if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 

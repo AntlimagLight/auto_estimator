@@ -25,15 +25,13 @@ public class MileParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing Mile");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("mile.txt");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/mile.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : orders) {
             val material = parseMaterialFromMile(order);
             if (material != null) materials.add(material);
         }
-        if (materials.isEmpty()) {
-            log.warn(this.getClass().getName() + " : No orders for parse");
-        }
+        if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 
@@ -42,7 +40,7 @@ public class MileParseService implements ParseService {
             val doc = Jsoup.connect(parseOrder.getUrl()).get();
             val priceText = doc.select("span[itemprop=price]").get(0).text();
             val price = BigDecimal.valueOf(Double.parseDouble(priceText.replace(',', '.')) +
-                            parseOrder.getCostModifier());
+                    parseOrder.getCostModifier());
             val specific = doc.select("h1[itemprop=name]").get(0).text();
             return MaterialDto.builder()
                     .name(parseOrder.getMaterialName().toLowerCase())

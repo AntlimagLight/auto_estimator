@@ -20,7 +20,8 @@ public class ServiceAssemblerImpl implements ServiceAssembler {
     public ServiceAssemblerImpl(PechiBaniParseService pechiBaniParseService, BelwentParseService belwentParseService,
                                 Kaminov100ParseService kaminov100ParseService, By7745ParseService by7745ParseService,
                                 MileParseService mileParseService, SamstroyParseService samstroyParseService,
-                                StalnoyParseService stalnoyParseService) {
+                                StalnoyParseService stalnoyParseService, PcentrParseService pcentrParseService,
+                                CustomMaterialsService customMaterialsService) {
         services.put(pechiBaniParseService, true);
         services.put(belwentParseService, true);
         services.put(kaminov100ParseService, true);
@@ -28,6 +29,8 @@ public class ServiceAssemblerImpl implements ServiceAssembler {
         services.put(mileParseService, true);
         services.put(samstroyParseService, true);
         services.put(stalnoyParseService, true);
+        services.put(pcentrParseService, true);
+        services.put(customMaterialsService, true);
     }
 
     @Override

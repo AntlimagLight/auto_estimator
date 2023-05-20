@@ -2,6 +2,7 @@ package by.kaminsky.service.parse;
 
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
+import by.kaminsky.exception.NotPriceException;
 import by.kaminsky.helper_objects.ParseOrder;
 import by.kaminsky.service.ParseOrderService;
 import lombok.RequiredArgsConstructor;
@@ -18,42 +19,42 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class By7745ParseService implements ParseService {
+public class PcentrParseService implements ParseService {
 
     private final ParseOrderService parseOrderService;
 
     @Override
     public List<MaterialDto> startParse() {
-        log.info("Start parsing 7745");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/7745.txt");
+        log.info("Start parsing pcentr");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/pcentr.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : orders) {
-            val material = parseMaterialFrom7745(order);
+            val material = parseMaterialFromPcentr(order);
             if (material != null) materials.add(material);
         }
         if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 
-    private MaterialDto parseMaterialFrom7745(ParseOrder parseOrder) {
+    private MaterialDto parseMaterialFromPcentr(ParseOrder parseOrder) {
         try {
             val doc = Jsoup.connect(parseOrder.getUrl()).get();
-            val priceText = doc.select("span.product__price-value").get(0).text();
-            val price =
-                    BigDecimal.valueOf(Double.parseDouble(priceText.substring(0, priceText.length() - 6)
-                            .replace(',', '.')) + parseOrder.getCostModifier());
-            val specific = doc.select("p.product-info-part__product-title").get(0).text();
+            val specific = doc.select("h1.byleft").text();
+            val priceElement = doc.select("span.shk-price").text();
+            if (priceElement.equals(".00")) throw new NotPriceException("Element have not price");
+            val price = BigDecimal.valueOf(Double.parseDouble(priceElement.replace(',', '.'))
+                    + parseOrder.getCostModifier());
             return MaterialDto.builder()
                     .name(parseOrder.getMaterialName().toLowerCase())
                     .specific(specific + " " + parseOrder.getMaterialAdditionalSpecific())
                     .packaging(parseOrder.getMaterialPackaging())
                     .cost(price)
-                    .source(SourceCompanies.BY7745.toString())
+                    .source(SourceCompanies.PECHNOYCENTR.toString())
                     .build();
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
             throw new RuntimeException(e);
-        } catch (IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException | NotPriceException e) {
             log.error("Unable to parse page - required elements are missing: {} : {}", parseOrder.getMaterialName(),
                     parseOrder.getUrl());
             return null;

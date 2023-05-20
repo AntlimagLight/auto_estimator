@@ -6,9 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +50,13 @@ public class UpdateController {
                 || text.toLowerCase().contains("отмена") || text.toLowerCase().contains("cancel")) {
             prometheusChats.remove(chatId);
             log.info("User sessions cleared {}", chatId);
+            return;
+        }
+
+        // FileSend case
+        if (text.toLowerCase().contains("file") || text.toLowerCase().contains("файл")) {
+            log.info("FILE SEND CASE {}", chatId);
+            sendFile(chatId, "test sending", "test_doc.xlsx");
             return;
         }
 
@@ -87,6 +99,24 @@ public class UpdateController {
         response.enableMarkdownV2(true);
         response.disableNotification();
         view(response);
+    }
+
+    private void sendFile(Long chatId, String text, String filePath) {
+        String sep = File.separator;
+        File file = new File(Paths.get("dispatcher" + sep + "src" + sep +
+                "main" + sep + "resources" + sep + filePath).toAbsolutePath().toString());
+        var document = new SendDocument();
+        document.setChatId(chatId);
+        document.setDocument(new InputFile(file));
+        document.setCaption(text);
+        try {
+            telegramBot.execute(document);
+        } catch (TelegramApiException e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+
     }
 
     private boolean baseValidation(Update update) {

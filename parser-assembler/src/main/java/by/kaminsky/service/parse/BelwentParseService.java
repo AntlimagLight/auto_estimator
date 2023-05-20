@@ -2,9 +2,9 @@ package by.kaminsky.service.parse;
 
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
-import by.kaminsky.service.ParseOrderService;
 import by.kaminsky.helper_objects.PageElements;
 import by.kaminsky.helper_objects.ParseOrder;
+import by.kaminsky.service.ParseOrderService;
 import by.kaminsky.util.MaterialUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +32,13 @@ public class BelwentParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing belwent");
-        var ordersRoundTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_round.txt");
-        var ordersEllipseTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_ellipse.txt");
-        var ordersInsulatedTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_insulated.txt");
-        var ordersBlackTubes = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_black.txt");
-        var ordersFasteners = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/belwent_fasteners.txt");
-        var ordersSchiedelIsokern = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/schiedel_isokern.txt");
-        var additionalMaterials = parseOrderService.prepareParseOrdersAndCheckForContent("belwent/additional_materials.txt");
+        var ordersRoundTubes = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/belwent_round.txt");
+        var ordersEllipseTubes = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/belwent_ellipse.txt");
+        var ordersInsulatedTubes = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/belwent_insulated.txt");
+        var ordersBlackTubes = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/belwent_black.txt");
+        var ordersFasteners = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/belwent_fasteners.txt");
+        var ordersSchiedelIsokern = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/schiedel_isokern.txt");
+        var additionalMaterials = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/belwent/additional_materials.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : ordersRoundTubes) {
             materials.addAll(parseRoundBareTubes(order));

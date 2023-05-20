@@ -26,14 +26,12 @@ public class SamstroyParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing samstroy");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("samstroy.txt");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/samstroy.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : orders) {
             materials.addAll(parseMaterialsFromSamstroy(order));
         }
-        if (materials.isEmpty()) {
-            log.warn(this.getClass().getName() + " : No orders for parse");
-        }
+        if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 

@@ -2,8 +2,8 @@ package by.kaminsky.service.parse;
 
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
-import by.kaminsky.service.ParseOrderService;
 import by.kaminsky.helper_objects.ParseOrder;
+import by.kaminsky.service.ParseOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -25,15 +25,13 @@ public class PechiBaniParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing pechibani");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("pechibani.txt");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/pechibani.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : orders) {
             val material = parseMaterialFromPechiBani(order);
             if (material != null) materials.add(material);
         }
-        if (materials.isEmpty()) {
-            log.warn(this.getClass().getName() + " : No orders for parse");
-        }
+        if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 

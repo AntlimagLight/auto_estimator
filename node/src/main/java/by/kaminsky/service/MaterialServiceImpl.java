@@ -24,9 +24,9 @@ public class MaterialServiceImpl implements MaterialService {
     @Override
     @Transactional
     public void save(Material material) {
-        log.info("Save: {}, {}", material.getId(), material.getName());
+        log.info("Save: {}", material.getName());
         assertNotExistence(materialsRepository.findByNameAndSpecificAndSource(material.getName(),
-                        material.getSpecific(), material.getSource()), "Material already exist");
+                material.getSpecific(), material.getSource()), "Material already exist");
         material.setLastUpdate(LocalDateTime.now());
         materialsRepository.save(assertExistence(material, "Missing material to save"));
     }
@@ -34,7 +34,7 @@ public class MaterialServiceImpl implements MaterialService {
     @Override
     @Transactional
     public void update(Long id, Material material) {
-        log.info("Update: {}, {}", material.getId(), material.getName());
+        log.info("Update: {}, {}", id, material.getName());
         assertExistence(materialsRepository.findById(id), "Material not found");
         material.setId(id);
         material.setLastUpdate(LocalDateTime.now());

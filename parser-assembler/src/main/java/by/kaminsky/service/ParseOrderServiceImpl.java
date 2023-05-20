@@ -16,14 +16,14 @@ import java.util.*;
 public class ParseOrderServiceImpl implements ParseOrderService {
 
     @Override
-    public List<ParseOrder> prepareParseOrders(String fileName) {
+    public List<ParseOrder> prepareParseOrders(String filePath) {
         List<ParseOrder> orders = new LinkedList<>();
         Scanner scanner = null;
         try {
             String sep = File.separator;
             File file = new File(Paths.get("parser-assembler" + sep + "src" + sep +
-                    "main" + sep + "resources" + sep + fileName).toAbsolutePath().toString());
-            log.debug("Pechibani file path: " + file.getPath());
+                    "main" + sep + "resources" + sep + filePath).toAbsolutePath().toString());
+            log.debug("File path: " + file.getPath());
             scanner = new Scanner(file);
             var separatorLine = false;
             do {

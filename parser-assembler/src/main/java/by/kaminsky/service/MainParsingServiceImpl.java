@@ -20,15 +20,17 @@ public class MainParsingServiceImpl implements MainParsingService {
     public void startParseAll() {
         log.info("Start parsing!");
 
-        serviceAssembler.disableParsingService("PechiBaniParseService");
-        serviceAssembler.disableParsingService("BelwentParseService");
-        serviceAssembler.disableParsingService("Kaminov100ParseService");
-        serviceAssembler.disableParsingService("By7745ParseService");
-        serviceAssembler.disableParsingService("MileParseService");
-        serviceAssembler.disableParsingService("SamstroyParseService");
-        serviceAssembler.disableParsingService("StalnoyParseService ");
+//        serviceAssembler.disableParsingService("PechiBaniParseService");
+//        serviceAssembler.disableParsingService("BelwentParseService");
+//        serviceAssembler.disableParsingService("Kaminov100ParseService");
+//        serviceAssembler.disableParsingService("By7745ParseService");
+//        serviceAssembler.disableParsingService("MileParseService");
+//        serviceAssembler.disableParsingService("SamstroyParseService");
+//        serviceAssembler.disableParsingService("StalnoyParseService");
+//        serviceAssembler.disableParsingService("PcentrParseService ");
+//        serviceAssembler.disableParsingService("CustomMaterialsService");
 
-        for (var service: serviceAssembler.getEnabledParsingServices()) {
+        for (var service : serviceAssembler.getEnabledParsingServices()) {
             service.startParse().forEach(producerService::producerAnswer);
         }
 

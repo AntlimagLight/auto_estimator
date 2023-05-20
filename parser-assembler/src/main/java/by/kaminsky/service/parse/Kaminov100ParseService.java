@@ -2,8 +2,8 @@ package by.kaminsky.service.parse;
 
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
-import by.kaminsky.service.ParseOrderService;
 import by.kaminsky.helper_objects.ParseOrder;
+import by.kaminsky.service.ParseOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -26,9 +26,9 @@ public class Kaminov100ParseService implements ParseService {
     @Override
     public List<MaterialDto> startParse() {
         log.info("Start parsing 100kaminov");
-        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("100kaminov.txt");
+        var orders = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/100kaminov/100kaminov.txt");
         var ordersBlackTubes
-                = parseOrderService.prepareParseOrdersAndCheckForContent("100kaminov_black_tubes.txt");
+                = parseOrderService.prepareParseOrdersAndCheckForContent("parse_orders/100kaminov/100kaminov_black_tubes.txt");
         List<MaterialDto> materials = new LinkedList<>();
         for (var order : orders) {
             val material = parseMaterialFrom100Kaminov(order);
@@ -37,9 +37,7 @@ public class Kaminov100ParseService implements ParseService {
         for (var order : ordersBlackTubes) {
             materials.addAll(parseBlackTubesFrom100Kaminov(order));
         }
-        if (materials.isEmpty()) {
-            log.warn(this.getClass().getName() + " : No orders for parse");
-        }
+        if (materials.isEmpty()) log.warn(this.getClass().getName() + " : No orders for parse");
         return materials;
     }
 
