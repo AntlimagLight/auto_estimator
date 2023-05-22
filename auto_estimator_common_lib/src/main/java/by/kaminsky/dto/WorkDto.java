@@ -11,14 +11,11 @@ import java.math.BigDecimal;
 @ToString
 @Builder
 @EqualsAndHashCode
-public class MaterialDto {
+public class WorkDto {
 
     private String name;
-    private String specific;
     private String packaging;
     private BigDecimal cost;
-    private String source;
-
 
 }
 

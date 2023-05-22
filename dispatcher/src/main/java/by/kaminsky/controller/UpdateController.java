@@ -1,6 +1,7 @@
 package by.kaminsky.controller;
 
 import by.kaminsky.dialogsesions.PrometheusSession;
+import by.kaminsky.service.EstimateCreationService;
 import by.kaminsky.service.UpdateProducer;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -13,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +25,7 @@ import static by.kaminsky.constants.RabbitQueue.TEXT_MESSAGE_UPDATE;
 public class UpdateController {
     private TelegramBot telegramBot;
     private final UpdateProducer updateProducer;
+    private final EstimateCreationService estimateCreationService;
 
     private final Map<Long, PrometheusSession> prometheusChats = new HashMap<>();
 
@@ -32,8 +33,9 @@ public class UpdateController {
         this.telegramBot = telegramBot;
     }
 
-    public UpdateController(UpdateProducer updateProducer) {
+    public UpdateController(UpdateProducer updateProducer, EstimateCreationService estimateCreationService) {
         this.updateProducer = updateProducer;
+        this.estimateCreationService = estimateCreationService;
     }
 
     public void processUpdate(Update update) {
@@ -56,7 +58,17 @@ public class UpdateController {
         // FileSend case
         if (text.toLowerCase().contains("file") || text.toLowerCase().contains("файл")) {
             log.info("FILE SEND CASE {}", chatId);
-            sendFile(chatId, "test sending", "test_doc.xlsx");
+            val path = estimateCreationService.createPrometheusEstimate(estimateCreationService.createTest());
+            if (path == null) {
+                log.warn("Unable to send file");
+                serviceResponse(update.getMessage().getChatId(), "❗️Возникла ошибка. Смета не может быть отправлена.");
+            } else {
+                sendFile(chatId, "test sending", path);
+                val file = new File(path);
+                if (file.delete()) {
+                    log.info("File {} deleted successfully", file.getName());
+                } else log.warn("File {} could not be deleted", file.getName());
+            }
             return;
         }
 
@@ -102,15 +114,14 @@ public class UpdateController {
     }
 
     private void sendFile(Long chatId, String text, String filePath) {
-        String sep = File.separator;
-        File file = new File(Paths.get("dispatcher" + sep + "src" + sep +
-                "main" + sep + "resources" + sep + filePath).toAbsolutePath().toString());
+        File file = new File(filePath);
         var document = new SendDocument();
         document.setChatId(chatId);
         document.setDocument(new InputFile(file));
         document.setCaption(text);
         try {
             telegramBot.execute(document);
+            log.info("File {} sent to user successfully", file.getName());
         } catch (TelegramApiException e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
