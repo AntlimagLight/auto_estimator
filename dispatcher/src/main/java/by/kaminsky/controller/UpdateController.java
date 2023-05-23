@@ -6,7 +6,6 @@ import by.kaminsky.service.UpdateProducer;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -58,7 +57,7 @@ public class UpdateController {
         // FileSend case
         if (text.toLowerCase().contains("file") || text.toLowerCase().contains("файл")) {
             log.info("FILE SEND CASE {}", chatId);
-            val path = estimateCreationService.createPrometheusEstimate(estimateCreationService.createTest());
+            val path = estimateCreationService.createEstimate(estimateCreationService.createTest());
             if (path == null) {
                 log.warn("Unable to send file");
                 serviceResponse(update.getMessage().getChatId(), "❗️Возникла ошибка. Смета не может быть отправлена.");
@@ -107,8 +106,6 @@ public class UpdateController {
         var response = new SendMessage();
         response.setChatId(chatId.toString());
         response.setText(text);
-        response.setParseMode(ParseMode.MARKDOWNV2);
-        response.enableMarkdownV2(true);
         response.disableNotification();
         view(response);
     }

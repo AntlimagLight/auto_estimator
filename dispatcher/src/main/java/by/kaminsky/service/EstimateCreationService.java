@@ -4,7 +4,7 @@ import by.kaminsky.dto.EstimateDataDto;
 
 public interface EstimateCreationService {
 
-    String createPrometheusEstimate(EstimateDataDto estimateData);
+    String createEstimate(EstimateDataDto estimateData);
 
     EstimateDataDto createTest();
 }

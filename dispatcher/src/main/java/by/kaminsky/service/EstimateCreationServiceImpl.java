@@ -4,6 +4,7 @@ import by.kaminsky.dto.EstimateDataDto;
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.dto.WorkDto;
 import by.kaminsky.enums.SourceCompanies;
+import by.kaminsky.util.CellStylesHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -20,22 +21,28 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EstimateCreationServiceImpl implements EstimateCreationService {
 
+    private final CellStylesHelper styles;
     public static final Path NEW_ESTIMATE_PATH = Paths.get("dispatcher" + File.separator + "src" + File.separator +
             "main" + File.separator + "resources").toAbsolutePath();
     public static final String SAMPLE = Paths.get("dispatcher" + File.separator + "src" + File.separator +
             "main" + File.separator + "resources" + File.separator + "basis.xlsx").toAbsolutePath().toString();
     private static final int START_WORK_TABLE = 9;
+    private static final int ADD_EMPTY_ROWS_WORKS = 5;
+    private static final int ADD_EMPTY_ROWS_MATERIALS = 5;
+    private static final int ADD_EMPTY_ROWS_TRANSPORT = 2;
 
     @Override
-    public String createPrometheusEstimate(EstimateDataDto estimateData) {
+    public String createEstimate(EstimateDataDto estimateData) {
         String OutputPath = NEW_ESTIMATE_PATH + File.separator + "Смета Дымоход Прометей от "
                 + LocalDateTime.now().toLocalDate() + ".xlsx";
         log.info("Start to design an estimate : {}", OutputPath);
@@ -51,22 +58,36 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
 
             createSectionTittle(sheet, styleMap.get("styleSectionTittle"), 8, "ПЕРЕЧЕНЬ ОСНОВНЫХ РАБОТ");
             generateWorkBlock(sheet, estimateData, styleMap);
-            sheet.createRow(START_WORK_TABLE + estimateData.getWorks().size() + 7).setHeightInPoints(4);
+            sheet.createRow(START_WORK_TABLE + estimateData.getWorks().size() +
+                    ADD_EMPTY_ROWS_WORKS + 2).setHeightInPoints(4);
             createSectionTittle(sheet, styleMap.get("styleSectionTittle"),
-                    START_WORK_TABLE + estimateData.getWorks().size() + 8, "МАТЕРИАЛЫ");
-            val startMaterialsBlock = START_WORK_TABLE + estimateData.getWorks().size() + 9;
+                    START_WORK_TABLE + estimateData.getWorks().size() + ADD_EMPTY_ROWS_WORKS + 3, "МАТЕРИАЛЫ");
+            val startMaterialsBlock = START_WORK_TABLE + estimateData.getWorks().size() + ADD_EMPTY_ROWS_WORKS + 4;
             generateMaterialsBlock(sheet, estimateData, startMaterialsBlock, styleMap);
-            sheet.createRow(startMaterialsBlock + estimateData.getMaterials().size() + 7).setHeightInPoints(4);
+            sheet.createRow(startMaterialsBlock + estimateData.getMaterials().size() +
+                    ADD_EMPTY_ROWS_MATERIALS + 2).setHeightInPoints(4);
+            createSectionTittle(sheet, styleMap.get("styleSectionTittle"),
+                    startMaterialsBlock + estimateData.getMaterials().size() + ADD_EMPTY_ROWS_MATERIALS + 3,
+                    "ОБОРУДОВАНИЕ И ТРАНСПОРТ");
+            val startTransportBlock = startMaterialsBlock + estimateData.getMaterials().size() +
+                    ADD_EMPTY_ROWS_MATERIALS + 4;
+            generateTransportBlock(sheet, startTransportBlock, styleMap);
+            sheet.createRow(startTransportBlock + ADD_EMPTY_ROWS_TRANSPORT + 5).setHeightInPoints(4);
+            createSectionTittle(sheet, styleMap.get("styleTotalSection"), startTransportBlock +
+                    ADD_EMPTY_ROWS_TRANSPORT + 6, "ИТОГИ (Руб)");
+            generateTotalBlock(sheet, estimateData, startTransportBlock + ADD_EMPTY_ROWS_TRANSPORT + 7, styleMap);
             book.write(outputEstimate);
         } catch (IOException e) {
             log.error("IOException: " + e.getMessage());
             try {
                 throw new RuntimeException(e);
             } catch (RuntimeException exception) {
+                emergencyFileDeletion(OutputPath);
                 return null;
             }
         } catch (RuntimeException e) {
             log.error("Undefended Error: " + e.getMessage());
+            emergencyFileDeletion(OutputPath);
             return null;
         }
         return OutputPath;
@@ -82,9 +103,9 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
     }
 
     private void generateWorkBlock(Sheet sheet, EstimateDataDto estimateData, Map<String, CellStyle> styleMap) {
-        log.info("Start to design works block");
+        log.debug("Start to design works block");
         val works = estimateData.getWorks().entrySet().stream().toList();
-        val worksTableSize = estimateData.getWorks().size() + 6;
+        val worksTableSize = estimateData.getWorks().size() + ADD_EMPTY_ROWS_WORKS + 1;
         for (var i = 0; i < worksTableSize; i++) {
             val row = sheet.createRow(i + START_WORK_TABLE);
             row.setHeightInPoints(13);
@@ -102,7 +123,7 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
                 row.createCell(3).setCellStyle(styleMap.get("styleHeaderCell"));
                 row.createCell(4).setCellStyle(styleMap.get("styleHeaderCell"));
             } else {
-                if (i >= worksTableSize - 5) {
+                if (i >= worksTableSize - ADD_EMPTY_ROWS_WORKS) {
                     cellNumber.setCellValue("");
                     cellDescription.setCellValue("");
                     cellCost.setCellValue("");
@@ -130,14 +151,15 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
         sheet.addMergedRegion(new CellRangeAddress(START_WORK_TABLE + worksTableSize,
                 START_WORK_TABLE + worksTableSize, 0, 4));
         total.getCell(0).setCellValue("ИТОГО по работам");
-        total.getCell(5).setCellFormula("SUM(F" + (START_WORK_TABLE + 1) + ":F" + (START_WORK_TABLE + worksTableSize) + ")");
+        total.getCell(5).setCellFormula("SUM(F" + (START_WORK_TABLE + 1) + ":F" +
+                (START_WORK_TABLE + worksTableSize) + ")");
     }
 
     private void generateMaterialsBlock(Sheet sheet, EstimateDataDto estimateData, int startMaterialsBlock,
                                         Map<String, CellStyle> styleMap) {
-        log.info("Start to design materials block");
+        log.debug("Start to design materials block");
         val materials = estimateData.getMaterials().entrySet().stream().toList();
-        val materialsTableSize = estimateData.getMaterials().size() + 6;
+        val materialsTableSize = estimateData.getMaterials().size() + ADD_EMPTY_ROWS_MATERIALS + 1;
         for (var i = 0; i < materialsTableSize; i++) {
             val row = sheet.createRow(i + startMaterialsBlock);
             row.setHeightInPoints(13);
@@ -161,7 +183,7 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
                 cellCost.setCellStyle(styleMap.get("styleHeaderCell"));
                 cellAmount.setCellStyle(styleMap.get("styleHeaderCell"));
             } else {
-                if (i >= materialsTableSize - 5) {
+                if (i >= materialsTableSize - ADD_EMPTY_ROWS_MATERIALS) {
                     cellNumber.setCellValue("");
                     cellDescription.setCellValue("");
                     cellUnit.setCellValue("");
@@ -191,63 +213,156 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
         sheet.addMergedRegion(new CellRangeAddress(startMaterialsBlock + materialsTableSize,
                 startMaterialsBlock + materialsTableSize, 0, 4));
         total.getCell(0).setCellValue("ИТОГО по материалам");
-        total.getCell(5).setCellFormula("SUM(F" + (startMaterialsBlock + 1) + ":F" + (startMaterialsBlock + materialsTableSize) + ")");
+        total.getCell(5).setCellFormula("SUM(F" + (startMaterialsBlock + 1) + ":F"
+                + (startMaterialsBlock + materialsTableSize) + ")");
+    }
+
+    private void generateTransportBlock(Sheet sheet, int startTransportBlock, Map<String, CellStyle> styleMap) {
+        log.debug("Start to design transport block");
+        String[] positions = {"Доставка стройматериалов", "Строительные леса", "Автовышка"};
+        val tableSize = ADD_EMPTY_ROWS_TRANSPORT + 4;
+        for (var i = 0; i < tableSize; i++) {
+            val row = sheet.createRow(i + startTransportBlock);
+            row.setHeightInPoints(13);
+            val cellNumber = row.createCell(0);
+            val cellDescription = row.createCell(1);
+            val cellUnit = row.createCell(2);
+            val cellQuantity = row.createCell(3);
+            val cellCost = row.createCell(4);
+            val cellAmount = row.createCell(5);
+            if (i == 0) {
+                cellNumber.setCellValue("№");
+                cellDescription.setCellValue("Описание");
+                cellUnit.setCellValue("ед. изм");
+                cellQuantity.setCellValue("кол-во");
+                cellCost.setCellValue("Цена");
+                cellAmount.setCellValue("Сумма, руб");
+                cellNumber.setCellStyle(styleMap.get("styleHeaderCell"));
+                cellDescription.setCellStyle(styleMap.get("styleHeaderCell"));
+                cellUnit.setCellStyle(styleMap.get("styleHeaderCell"));
+                cellQuantity.setCellStyle(styleMap.get("styleHeaderCell"));
+                cellCost.setCellStyle(styleMap.get("styleHeaderCell"));
+                cellAmount.setCellStyle(styleMap.get("styleHeaderCell"));
+            } else {
+                if (i >= tableSize - ADD_EMPTY_ROWS_TRANSPORT) {
+                    cellNumber.setCellValue("");
+                    cellDescription.setCellValue("");
+                    cellUnit.setCellValue("");
+                    cellQuantity.setCellValue(0);
+                } else {
+                    cellNumber.setCellValue(i);
+                    cellDescription.setCellValue(positions[i - 1]);
+                    cellUnit.setCellValue("раз.");
+                    cellQuantity.setCellValue(1);
+                }
+                cellCost.setCellValue(0);
+                cellAmount.setCellFormula("E" + (startTransportBlock + i + 1) + "*D" + (startTransportBlock + i + 1));
+                cellNumber.setCellStyle(styleMap.get("styleNumberCell"));
+                cellDescription.setCellStyle(styleMap.get("styleDescriptionCell"));
+                cellUnit.setCellStyle(styleMap.get("styleDescriptionCell"));
+                cellQuantity.setCellStyle(styleMap.get("stylePriceCell"));
+                cellCost.setCellStyle(styleMap.get("stylePriceCell"));
+                cellAmount.setCellStyle(styleMap.get("stylePriceCell"));
+            }
+        }
+        val total = sheet.createRow(tableSize + startTransportBlock);
+        for (var i = 0; i < 6; i++) {
+            total.createCell(i)
+                    .setCellStyle(i == 5 ? styleMap.get("styleTotalPriceCell") : styleMap.get("styleTotalCell"));
+        }
+        sheet.addMergedRegion(new CellRangeAddress(startTransportBlock + tableSize,
+                startTransportBlock + tableSize, 0, 4));
+        total.getCell(0).setCellValue("ИТОГО по оборудованию и транспорту");
+        total.getCell(5)
+                .setCellFormula("SUM(F" + (startTransportBlock + 1) + ":F" + (startTransportBlock + tableSize) + ")");
+    }
+
+    private void generateTotalBlock(Sheet sheet, EstimateDataDto estimateData, int startTotalBlock,
+                                    Map<String, CellStyle> styleMap) {
+        log.debug("Start to design total block");
+        var allBlockRows = new ArrayList<Row>();
+        for (var i = 0; i < 8; i++) {
+            allBlockRows.add(sheet.createRow(startTotalBlock + i));
+        }
+        for (var i = 0; i < 8; i++) {
+            for (var j = 0; j < 5; j++) {
+                if (i == 7) {
+                    allBlockRows.get(i).createCell(j).setCellStyle(styleMap.get("styleEndTotalCell"));
+                } else if (i < 3) {
+                    allBlockRows.get(i).createCell(j).setCellStyle(styleMap.get("styleTotalBlockCell"));
+                } else {
+                    allBlockRows.get(i).createCell(j).
+                            setCellStyle(styleMap.get(j == 4 ? "stylePrepaymentPercent" : "stylePrepaymentBlock"));
+                }
+            }
+            if (i != 7) {
+                allBlockRows.get(i).createCell(5)
+                        .setCellStyle(styleMap.get(i == 2 ? "styleTotalEstimateSum" : "styleTotalPriceCell"));
+                sheet.addMergedRegion(new CellRangeAddress(startTotalBlock + i, startTotalBlock + i, 0, i < 3 ? 3 : 2));
+            }
+        }
+        for (var i = 0; i < 3; i++) {
+            allBlockRows.get(i).getCell(4).setCellValue("руб.");
+        }
+        final int worksCostCellIdx = START_WORK_TABLE + estimateData.getWorks().size() + ADD_EMPTY_ROWS_WORKS + 2;
+        final int materialsCostCellIdx = worksCostCellIdx + estimateData.getMaterials().size() +
+                ADD_EMPTY_ROWS_MATERIALS + 4;
+        final int transportCostCellIdx = materialsCostCellIdx + ADD_EMPTY_ROWS_WORKS + 4;
+        allBlockRows.get(0).getCell(0).setCellValue("Общая стоимость оборудования, материалов и транспорта");
+        val materialsAndTransportTotal = allBlockRows.get(0).getCell(5);
+        materialsAndTransportTotal.setCellFormula("F" + materialsCostCellIdx + "+F" + transportCostCellIdx);
+        allBlockRows.get(1).getCell(0).setCellValue("Общая стоимость всех работ");
+        val worksTotal = allBlockRows.get(1).getCell(5);
+        worksTotal.setCellFormula("F" + worksCostCellIdx);
+        allBlockRows.get(2).getCell(0).setCellValue("Итого по смете:");
+        val allTotal = allBlockRows.get(2).getCell(5);
+        allTotal.setCellFormula("F" + (materialsAndTransportTotal.getRowIndex() + 1) + "+F" + (worksTotal.getRowIndex() + 1));
+        allBlockRows.get(3).getCell(0).setCellValue("Аванс на работу:");
+        allBlockRows.get(3).getCell(3).setCellValue(20);
+        allBlockRows.get(3).getCell(4).setCellValue("%");
+        val worksPrepayment = allBlockRows.get(3).getCell(5);
+        worksPrepayment.setCellFormula("F" + (worksTotal.getRowIndex() + 1) + "/100*D" + (worksPrepayment.getRowIndex() + 1));
+        allBlockRows.get(4).getCell(0).setCellValue("Аванс на материалы:");
+        allBlockRows.get(4).getCell(3).setCellValue(100);
+        allBlockRows.get(4).getCell(4).setCellValue("%");
+        val materialsPrepayment = allBlockRows.get(4).getCell(5);
+        materialsPrepayment.setCellFormula("F" + (materialsAndTransportTotal.getRowIndex() + 1) + "/100*D"
+                + (materialsPrepayment.getRowIndex() + 1));
+        allBlockRows.get(5).getCell(0).setCellValue("Аванс Итого:");
+        val totalPrepayment = allBlockRows.get(5).getCell(5);
+        totalPrepayment.setCellFormula("F" + (worksPrepayment.getRowIndex() + 1) + "+F"
+                + (materialsPrepayment.getRowIndex() + 1));
+        allBlockRows.get(6).getCell(0).setCellValue("Остаток на окончательный расчет:");
+        allBlockRows.get(6).getCell(5).setCellFormula("F" + (allTotal.getRowIndex() + 1)
+                + "-F" + (totalPrepayment.getRowIndex() + 1));
     }
 
     private Map<String, CellStyle> createStyleMap(Workbook book) {
         Map<String, CellStyle> styleMap = new HashMap<>();
-        styleMap.put("styleDescriptionCell", createStyleTableCell(book.createCellStyle(), HorizontalAlignment.LEFT));
-        styleMap.put("styleNumberCell", createStyleTableCell(book.createCellStyle(), HorizontalAlignment.CENTER));
-        styleMap.put("stylePriceCell", createStyleTableCell(book.createCellStyle(), HorizontalAlignment.RIGHT));
-        styleMap.put("styleTotalCell", createStyleTotalCell(book.createCellStyle(), book.createFont(),
+        styleMap.put("styleDescriptionCell", styles.setStyleTableCell(book.createCellStyle(), HorizontalAlignment.LEFT));
+        styleMap.put("styleNumberCell", styles.setStyleTableCell(book.createCellStyle(), HorizontalAlignment.CENTER));
+        styleMap.put("stylePriceCell", styles.setStyleTableCell(book.createCellStyle(), HorizontalAlignment.RIGHT));
+        styleMap.put("styleTotalCell", styles.setStyleTotalCell(book.createCellStyle(), book.createFont(),
                 HorizontalAlignment.CENTER));
-        styleMap.put("styleTotalPriceCell", createStyleTotalCell(book.createCellStyle(), book.createFont(),
+        styleMap.put("styleTotalPriceCell", styles.setStyleTotalCell(book.createCellStyle(), book.createFont(),
                 HorizontalAlignment.RIGHT));
-        styleMap.put("styleHeaderCell", createStyleHeaderCell(book.createCellStyle(), book.createFont()));
-        styleMap.put("styleSectionTittle", createStyleSectionTittle(book.createCellStyle(), book.createFont()));
+        styleMap.put("styleTotalBlockCell", styles.setStyleTotalCell(book.createCellStyle(), book.createFont(),
+                HorizontalAlignment.LEFT));
+        styleMap.put("styleHeaderCell", styles.setStyleHeaderCell(book.createCellStyle(), book.createFont()));
+        styleMap.put("styleSectionTittle", styles.setStyleSectionTittle(book.createCellStyle(), book.createFont()));
+        styleMap.put("styleTotalSection", styles.setStyleTotalSection(book.createCellStyle(), book.createFont()));
+        styleMap.put("stylePrepaymentBlock", styles.setStylePrepaymentBlock(book.createCellStyle(), book.createFont()));
+        styleMap.put("styleEndTotalCell", styles.setStyleEndTotalTable(book.createCellStyle()));
+        styleMap.put("styleTotalEstimateSum", styles.setStyleTotalEstimateSum(book.createCellStyle(), book.createFont()));
+        styleMap.put("stylePrepaymentPercent", styles.setStylePrepaymentPercent(book.createCellStyle(), book.createFont()));
         return styleMap;
     }
 
-    private void makeBorders(CellStyle cs) {
-        cs.setBorderBottom(BorderStyle.THIN);
-        cs.setBorderLeft(BorderStyle.THIN);
-        cs.setBorderRight(BorderStyle.THIN);
-        cs.setBorderTop(BorderStyle.THIN);
-    }
-
-    private CellStyle createStyleTableCell(CellStyle cs, HorizontalAlignment Alignment) {
-        makeBorders(cs);
-        cs.setAlignment(Alignment);
-        return cs;
-    }
-
-    private CellStyle createStyleHeaderCell(CellStyle cs, Font f) {
-        makeBorders(cs);
-        cs.setAlignment(HorizontalAlignment.CENTER);
-        f.setBold(true);
-        cs.setFont(f);
-        return cs;
-    }
-
-    private CellStyle createStyleSectionTittle(CellStyle cs, Font f) {
-        makeBorders(cs);
-        cs.setAlignment(HorizontalAlignment.CENTER);
-        cs.setFillBackgroundColor(IndexedColors.RED.getIndex());
-        f.setBold(true);
-        f.setFontHeightInPoints((short) 12);
-        cs.setFont(f);
-        return cs;
-    }
-
-    private CellStyle createStyleTotalCell(CellStyle cs, Font f, HorizontalAlignment Alignment) {
-        cs.setBorderBottom(BorderStyle.MEDIUM);
-        cs.setBorderLeft(BorderStyle.MEDIUM);
-        cs.setBorderRight(BorderStyle.MEDIUM);
-        cs.setBorderTop(BorderStyle.MEDIUM);
-        cs.setAlignment(Alignment);
-        f.setBold(true);
-        cs.setFont(f);
-        return cs;
+    private void emergencyFileDeletion(String path) {
+        File file = new File(path);
+        if (file.delete()) {
+            log.warn("File {} emergency deleted successfully", file.getName());
+        } else log.warn("File {} could not be deleted", file.getName());
     }
 
     public EstimateDataDto createTest() {
