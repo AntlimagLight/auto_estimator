@@ -4,6 +4,7 @@ import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.enums.SourceCompanies;
 import by.kaminsky.helper_objects.PageElements;
 import by.kaminsky.helper_objects.ParseOrder;
+import by.kaminsky.repository.ExchangeRatesStorage;
 import by.kaminsky.service.ParseOrderService;
 import by.kaminsky.util.MaterialUtils;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.Map;
 public class BelwentParseService implements ParseService {
 
     private final ParseOrderService parseOrderService;
+    private final ExchangeRatesStorage exchangeRatesStorage;
 
     @Override
     public List<MaterialDto> startParse() {
@@ -59,7 +61,12 @@ public class BelwentParseService implements ParseService {
             val material = parseMaterialFromSchiedelIsokern(order);
             if (material != null) materials.add(material);
         }
-        materials.addAll(MaterialUtils.convertOrdersToMaterials(additionalMaterials, SourceCompanies.BELWENT));
+//        The price of additional materials is provided in USA dollars
+//        in the general list of materials from the parser, the price is indicated in Belarusian rubles.
+        materials.addAll(MaterialUtils.convertOrdersToMaterials(additionalMaterials, SourceCompanies.BELWENT).stream()
+                .peek(materialDto -> materialDto.setCost(BigDecimal.valueOf(materialDto.getCost().doubleValue() *
+                        exchangeRatesStorage.getRate("USD").getOfficialRate())))
+                .toList());
         if (materials.isEmpty()) {
             log.warn(this.getClass().getName() + " : No orders for parse");
         }

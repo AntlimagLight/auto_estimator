@@ -1,5 +1,6 @@
 package by.kaminsky.dto;
 
+import by.kaminsky.exchangeRate.ExchangeRate;
 import lombok.*;
 
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.Map;
 public class EstimateDataDto {
 
     private String projectName;
+    private ExchangeRate exchangeRate;
     private Map<WorkDto, Integer> works;
     private Map<MaterialDto, Integer> materials;
 

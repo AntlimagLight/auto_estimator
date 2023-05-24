@@ -4,6 +4,9 @@ import by.kaminsky.dto.PrometheusRequestData;
 import by.kaminsky.entity.Material;
 import by.kaminsky.enums.ServiceCommand;
 import by.kaminsky.enums.SourceCompanies;
+import by.kaminsky.exchangeRate.BynExchangeRate;
+import by.kaminsky.exchangeRate.ExchangeRate;
+import by.kaminsky.repository.ExchangeRatesStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -11,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 
 @SuppressWarnings("SameParameterValue")
 @Service
@@ -19,8 +24,8 @@ import java.math.BigDecimal;
 public class MainServiceImpl implements MainService {
 
     private final MaterialService materialService;
-
     private final ProducerService producerService;
+    private final ExchangeRatesStorage exchangeRatesStorage;
 
     @Override
     public void processTextMessage(Update update) {
@@ -138,9 +143,35 @@ public class MainServiceImpl implements MainService {
     }
 
     private String describeMaterial(Material material) {
-        return "<u>ID №: " + material.getId() + "</u> | " + material.getName() + " | " + material.getLastUpdate().toLocalDate() +
-                "\n" + "<b>Источник:</b> <i>" + material.getSource() + "</i>\n" +
-                "<i>" + material.getSpecific() + "</i>\n" +
-                "<i>Цена за 1 " + material.getPackaging() + " :</i> <b>" + material.getCost() + " BYN</b>\n";
+        val bynCost = BigDecimal.valueOf(assureRelevanceUSDRateAndGet().getOfficialRate()
+                * material.getCost().doubleValue());
+        return "<u>ID №: " + material.getId() + "</u> | " + material.getName() + " | " +
+                material.getLastUpdate().toLocalDate() + "\n" + "<b>Источник:</b> <i>" + material.getSource() +
+                "</i>\n" + "<i>" + material.getSpecific() + "</i>\n" + "<i>Цена за 1 " + material.getPackaging() +
+                " :</i> <b>" + bynCost.setScale(2, RoundingMode.UP) + " BYN | " + material.getCost() + " $</b>\n";
+    }
+
+    public ExchangeRate assureRelevanceUSDRateAndGet() {
+        if (!exchangeRatesStorage.checkExchangeRate("USD") ||
+                !exchangeRatesStorage.getRate("USD").getDate().equals(LocalDate.now())) {
+            updExchangeRateUSD();
+        }
+        if (!exchangeRatesStorage.checkExchangeRate("USD")) {
+            log.warn("Impossible to get USD exchange rate");
+            return BynExchangeRate.builder()
+                    .officialRate(0d)
+                    .build();
+        }
+        return exchangeRatesStorage.getRate("USD");
+    }
+
+    public void updExchangeRateUSD() {
+        try {
+            var rate = BynExchangeRate.requestRateUSD();
+            log.info("got exchange rate {}", rate.toString());
+            exchangeRatesStorage.setRate("USD", rate);
+        } catch (Exception e) {
+            log.error("Failed to get USD exchange rate");
+        }
     }
 }

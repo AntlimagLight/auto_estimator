@@ -4,6 +4,7 @@ import by.kaminsky.dto.EstimateDataDto;
 import by.kaminsky.dto.MaterialDto;
 import by.kaminsky.dto.WorkDto;
 import by.kaminsky.enums.SourceCompanies;
+import by.kaminsky.exchangeRate.BynExchangeRate;
 import by.kaminsky.util.CellStylesHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -404,7 +406,8 @@ public class EstimateCreationServiceImpl implements EstimateCreationService {
         materialList.put(m1, 1);
         materialList.put(m2, 4);
         materialList.put(m3, 33);
-        return new EstimateDataDto("Установка дымоходной системы \"Прометей\"", workList, materialList);
+        var ex = new BynExchangeRate(LocalDate.now(), "USD", 2.91);
+        return new EstimateDataDto("Установка дымоходной системы \"Прометей\"", ex, workList, materialList);
 
 
     }
